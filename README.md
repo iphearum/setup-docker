@@ -56,3 +56,4 @@
 + Stop all containers and remove: `docker stop $(docker ps -a -q)` and `docker rm $(docker ps -a -q)`
 + Try to start again `docker-compose up -d`
 + Try to reinstall `docker-compose up -d --remove-orphans` with `--remove-orphans` option
++ Remove and reinstall `docker kill $(docker ps -q) && docker rm $(docker ps -a -q) && docker rmi $(docker images -q) && docker-compose build && docker-compose up -d --remove-orphans`
