@@ -1,0 +1,17 @@
+127.0.0.1	localhost
+::1	localhost ip6-localhost ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+
+# service
+127.0.0.1   service.app.smis service.student.smis service.employee.smis service.auth.smis service.classroom.smis
+
+127.0.0.1   smis-production.smis
+
+# httpd
+127.0.0.1   httpd.scoring.smis httpd.timetable.smis httpd.charge.smis httpd.client.smis httpd.classroom.smis httpd.student.smis httpd.employee.smis httpd.auth.smis httpd.classroom.smis httpd.internship.smis httpd.schedule.smis
+
+#nginx
+127.0.0.1   nginx.scoring.smis nginx.timetable.smis nginx.charge.smis nginx.client.smis nginx.classroom.smis nginx.student.smis nginx.employee.smis nginx.auth.smis nginx.classroom.smis nginx.internship.smis nginx.schedule.smis

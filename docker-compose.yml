@@ -1,93 +1,107 @@
-version: "3.5"
+version: '3'
+
+# platform: linux/arm64/v8
 
 services:
-    redis:
-      image: redis:alpine
-      container_name: ${PROJECT_NAME}-redis
+  db-postgresql:
+    image: postgres:12.3-alpine
+    # restart: always
+    container_name: ${APP_NAME}-postgresql
+    ports:
+      - "54321:5432"
+    volumes:
+        - ./docker/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    networks:
+      app-network:
+        ipv4_address: 172.28.1.2
 
-    postgres:
-      image: postgres:9.5-alpine
-      container_name: ${PROJECT_NAME}-postgres
-      volumes:
-        - ./sourcefiles/postgres:/var/lib/postgresql/data
-      environment:
-        - POSTGRES_USER=${POSTGRES_USER}
-        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-        - POSTGRES_DB=${POSTGRES_DB}
-        # - SERVICE_TAG=${POSTGRES_USER}
-        # - SERVICE_NAME=${POSTGRES_USER}
-      ports:
-        - "54323:5432"
-      # restart: always
-      # healthcheck:
-      #   test: ["CMD", "pg_isready", "-U", "auth"]
-      #   interval: 30s
-      #   timeout: 3s
-      #   retries: 5
-      # networks:
-      #   testing_net:
-      #     ipv4_address: 0.0.0.0
+  php-fpm:
+    image: ${APP_NAME}-images-php-fpm
+    container_name: ${APP_NAME}-php-fpm
+    build: ./docker/php-fpm
+    working_dir: /application
+    volumes:
+      - ./docker/php-fpm/php-ini-overrides.ini:/etc/php/8.1/fpm/conf.d/99-overrides.ini
+    ports:
+      - "9000:9000"
+    networks:
+      app-network:
+        ipv4_address: 172.28.1.3
 
-    nginx:
-      image: nginx:alpine
-      container_name: ${PROJECT_NAME}-nginx
-      restart: unless-stopped
-      tty: true
-      ports:
-        - "80:80"
-        - "443:443"
-      volumes:
-        - ./sourcefiles/nginx/sites/:/etc/nginx/conf.d/
-        - ./sourcefiles/nginx/ssl/:/etc/ssl/
-      networks:
-        testing_net:
-          ipv4_address: 172.28.1.3
+  nginx-server:
+    image: nginx:latest
+    container_name: nginx-server
+    ports:
+      - "9001:8001"
+      - "9002:8002"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      # - ./docker/nginx/hosts:/etc/hosts
+    depends_on:
+      - db-postgresql
+    networks:
+      app-network:
+        ipv4_address: 172.28.1.4
 
-    webserver-app-001:
-      image: nginx:alpine
-      container_name: ${PROJECT_NAME}-webserver-app-001
-      working_dir: /application/app-001
-      build:
-        context: application/app-001
-        dockerfile: Dockerfile
-      depends_on:
-        - "nginx"
-        - "postgres"
-      volumes:
-        - ./application/app-001:/application/app-001
-      ports:
-        - "8080:80"
-      # networks:
-      #   testing_net:
-      #     ipv4_address: 172.28.1.4
+  webserver-app-001:
+    image: ${APP_NAME}-images-php-fpm
+    container_name: ${APP_NAME}-001
+    build: ./application/app-001
+    working_dir: /application/app-001
+    hostname: smis-production.smis
+    restart: unless-stopped
+    tty: true
+    # restart: always
+    ports:
+      - "8001:80"
+      - "4431:443"
+    volumes:
+      - ./application/app-001:/var/www/html/app-001
+    depends_on:
+      - db-postgresql
+    links:
+      - db-postgresql
+    networks:
+      app-network:
+        ipv4_address: 172.28.1.5
+        aliases:
+            - smis-production.smis
 
-    webserver-app-002:
-      image: nginx:alpine
-      container_name: ${PROJECT_NAME}-webserver-app-002
-      working_dir: /application/app-002
-      volumes:
-        - ./application/app-002:/application/app-002
-      ports:
-        - "8081:80"
-      # networks:
-      #   testing_net:
-      #     ipv4_address: 172.28.1.5
+  webserver-app-002:
+    image: ${APP_NAME}-images-php-fpm
+    build: ./application/app-002
+    working_dir: /application/app-002
+    container_name: ${APP_NAME}-002
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8002:80"
+      - "4432:443"
+    depends_on:
+      - db-postgresql
+    volumes:
+      - ./application/app-002:/var/www/html/app-002
+    networks:
+      app-network:
+        ipv4_address: 172.28.1.6
 
-    php-fpm:
-      build: sourcefiles/php-fpm
-      container_name: ${PROJECT_NAME}-php-fpm
-      working_dir: /application
-      volumes:
-        - ./application:/application
-        - ./sourcefiles/php-fpm/php-ini-overrides.ini:/etc/php/8.1/fpm/conf.d/99-overrides.ini
-      ports:
-        - "9000:9000"
-      networks:
-        testing_net:
-          ipv4_address: 172.28.1.6
+volumes:
+  multiple-application:
+  db-postgresql:
+    driver: local
+
 networks:
-  testing_net:
+  app-network:
     ipam:
       driver: default
       config:
         - subnet: 172.28.0.0/16
+        # - getway: 172.28.1.1
+
+# extra_hosts:
+#   - 'smis-production.smis: 172.28.1.4'

@@ -1,7 +1,6 @@
-# FROM ubuntu:latest
 FROM phpdockerio/php80-fpm:latest
 
-WORKDIR "/application"
+WORKDIR "/var/www/html"
 # Fix debconf warnings upon build
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -9,25 +8,23 @@ RUN apt-get update && apt-get install -y \
     && apt-get -y --no-install-recommends install  php8.1-pgsql php8.1-gd php-redis \
     && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-FROM php:8.0-fpm
-WORKDIR "/application"
-
-
+FROM php:8.1-fpm
+WORKDIR "/var/www/html"
 
 RUN apt-get update && apt-get install -y \
-        libfreetype6-dev \
-        libjpeg62-turbo-dev \
-        libpng-dev \
-        libpq-dev \
-        zlib1g-dev \
-        libxml2-dev \
-        libzip-dev \
-        libonig-dev \
-        zip \
-        curl \
-        unzip \
-        git \
-        vim \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libpq-dev \
+    zlib1g-dev \
+    libxml2-dev \
+    libzip-dev \
+    libonig-dev \
+    zip \
+    curl \
+    unzip \
+    git \
+    vim \
     && docker-php-ext-configure gd \
     && docker-php-ext-install pdo_mysql \
     && docker-php-ext-install mysqli \
@@ -50,7 +47,6 @@ RUN apt-get update \
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Add user for laravel application
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
 
@@ -67,7 +63,7 @@ RUN useradd -u 1000 -ms /bin/bash -g www www
 # RUN npm --version
 
 # Copy existing application directory permissions
-COPY --chown=www:www . /application
+COPY --chown=www:www . /var/www/html
 
 # Change current user to www
 USER www

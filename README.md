@@ -56,4 +56,14 @@
 + Stop all containers and remove: `docker stop $(docker ps -a -q)` and `docker rm $(docker ps -a -q)`
 + Try to start again `docker-compose up -d`
 + Try to reinstall `docker-compose up -d --remove-orphans` with `--remove-orphans` option
++ Remove all volumes from docker `docker system prune --all --volumes`
 + Remove and reinstall `docker kill $(docker ps -q) && docker rm $(docker ps -a -q) && docker rmi $(docker images -q) && docker-compose build && docker-compose up -d --remove-orphans`
+
+# Force remove containers docker
++ restart docker `sudo systemctl restart docker.socket docker.service`
++ remove constaints id `docker rm $(docker ps -a -q)`
+
+# Remove volumes from docker
++ Remove valumes `docker system prune`
++ Remove all volumes from docker `docker system prune --all` or `docker system prune -a`
++ Remove all image valumes `docker image prune`
